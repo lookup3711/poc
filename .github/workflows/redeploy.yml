@@ -1,0 +1,31 @@
+# .github/workflows/redeploy.yml
+name: Manual Redeploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'ECR Image Tag to deploy (e.g. v1.0.0)'
+        required: true
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Redeploy CloudFormation Stack
+        run: |
+          aws cloudformation deploy \
+            --template-file infra/ecs-template.yml \
+            --stack-name myapp-stack \
+            --parameter-overrides ImageTag=${{ github.event.inputs.image_tag }} \
+            --capabilities CAPABILITY_IAM
