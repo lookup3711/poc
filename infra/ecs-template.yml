@@ -171,3 +171,8 @@ Resources:
         - TargetGroupArn: !Ref TargetGroup
           ContainerName: myapp
           ContainerPort: 80
+
+Outputs:
+  LoadBalancerDNSName:
+    Description: DNS name of the ALB
+    Value: !GetAtt ALB.DNSName
