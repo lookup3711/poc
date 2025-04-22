@@ -103,7 +103,7 @@ Resources:
       Cpu: 256
       Memory: 512
       NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      ExecutionRoleArn: !Ref TaskExecutionRole
       ContainerDefinitions:
         - Name: myapp
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/myapp:${ImageTag}"
