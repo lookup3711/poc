@@ -1,0 +1,20 @@
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./network/vpc.yaml
+
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./compute/ecs.yaml
+
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./network/alb.yaml
+
+  CodeDeployStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./codedeploy/codedeploy.yaml

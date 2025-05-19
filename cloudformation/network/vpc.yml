@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: VPC and Subnets
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - prd
+    Description: Environment name (dev or prd)
+
+  ProjectName:
+    Type: String
+    Description: Logical project name
+
+Mappings:
+  EnvToCidr:
+    dev:
+      VpcCidr: "10.0.0.0/16"
+      Pub1:    "10.0.0.0/24"
+      Pub2:    "10.0.1.0/24"
+      Pri1:    "10.0.2.0/24"
+      Pri2:    "10.0.3.0/24"
+    prd:
+      VpcCidr: "10.2.0.0/16"
+      Pub1:    "10.2.0.0/24"
+      Pub2:    "10.2.1.0/24"
+      Pri1:    "10.2.2.0/24"
+      Pri2:    "10.2.3.0/24"
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !FindInMap [EnvToCidr, !Ref Environment, VpcCidr]
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-vpc"
+
+  SubnetPublic1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !FindInMap [EnvToCidr, !Ref Environment, Pub1]
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-pub-1"
+
+  SubnetPublic2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !FindInMap [EnvToCidr, !Ref Environment, Pub2]
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-pub-2"
+
+  SubnetPrivate1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !FindInMap [EnvToCidr, !Ref Environment, Pri1]
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-pri-1"
+
+  SubnetPrivate2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !FindInMap [EnvToCidr, !Ref Environment, Pri2]
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-pri-2"
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-VpcId"
+
+  VpcCidrBlock:
+    Value: !GetAtt VPC.CidrBlock
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-VpcCidrBlock"
+
+  SubnetPublic1:
+    Value: !Ref SubnetPublic1
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-SubnetPublic1"
+
+  SubnetPublic2:
+    Value: !Ref SubnetPublic2
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-SubnetPublic2"
+
+  SubnetPrivate1:
+    Value: !Ref SubnetPrivate1
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-SubnetPrivate1"
+
+  SubnetPrivate2:
+    Value: !Ref SubnetPrivate2
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-SubnetPrivate2"

@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ALB, Target Groups, and Listener (HTTPS only)
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prd]
+
+  ProjectName:
+    Type: String
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+
+  SubnetPublic1Id:
+    Type: AWS::EC2::Subnet::Id
+  SubnetPublic2Id:
+    Type: AWS::EC2::Subnet::Id
+
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+
+  TargetPort:
+    Type: Number
+    Default: 8080
+
+  ACMCertificateArn:
+    Type: String
+    Description: ACM Certificate ARN for HTTPS listener
+    NoEcho: true
+
+Resources:
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${Environment}-${ProjectName}-alb"
+      Scheme: internet-facing
+      Subnets:
+        - !Ref SubnetPublic1Id
+        - !Ref SubnetPublic2Id
+      SecurityGroups:
+        - !Ref AlbSecurityGroup
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: 1200
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-alb"
+
+  TargetGroup1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${Environment}-${ProjectName}-tg1"
+      VpcId: !Ref VpcId
+      Protocol: HTTP
+      Port: !Ref TargetPort
+      TargetType: ip
+      HealthCheckPath: /
+      Matcher:
+        HttpCode: 200
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+
+  TargetGroup2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${Environment}-${ProjectName}-tg2"
+      VpcId: !Ref VpcId
+      Protocol: HTTP
+      Port: !Ref TargetPort
+      TargetType: ip
+      HealthCheckPath: /
+      Matcher:
+        HttpCode: 200
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+
+  AlbListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !Ref ACMCertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup1
+
+Outputs:
+  AlbArn:
+    Value: !Ref ALB
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-AlbArn"
+
+  TargetGroup1Arn:
+    Value: !Ref TargetGroup1
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-TargetGroup1Arn"
+
+  TargetGroup2Arn:
+    Value: !Ref TargetGroup2
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-TargetGroup2Arn"
+
+  AlbListenerArn:
+    Value: !Ref AlbListenerHTTPS
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-AlbListenerArn"

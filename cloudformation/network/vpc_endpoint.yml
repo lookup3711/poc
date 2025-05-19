@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: VPC Endpoints for S3, ECR, and Logs
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prd]
+
+  ProjectName:
+    Type: String
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+
+  SubnetPublic1Id:
+    Type: AWS::EC2::Subnet::Id
+  SubnetPublic2Id:
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateRouteTableId:
+    Type: String
+
+  VpcEndpointSG:
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+
+  VpcEndpointECRApi:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref SubnetPublic1Id
+        - !Ref SubnetPublic2Id
+      SecurityGroupIds:
+        - !Ref VpcEndpointSG
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-vpce-ecr-api"
+
+  VpcEndpointECRDKR:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref SubnetPublic1Id
+        - !Ref SubnetPublic2Id
+      SecurityGroupIds:
+        - !Ref VpcEndpointSG
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-vpce-ecr-dkr"
+
+  VpcEndpointLogs:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref SubnetPublic1Id
+        - !Ref SubnetPublic2Id
+      SecurityGroupIds:
+        - !Ref VpcEndpointSG
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-vpce-logs"
+
+  VpcEndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcId: !Ref VpcId
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTableId
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-vpce-s3"
+
+Outputs:
+  VpcEndpointECRApi:
+    Value: !Ref VpcEndpointECRApi
+
+  VpcEndpointECRDKR:
+    Value: !Ref VpcEndpointECRDKR
+
+  VpcEndpointLogs:
+    Value: !Ref VpcEndpointLogs
+
+  VpcEndpointS3:
+    Value: !Ref VpcEndpointS3

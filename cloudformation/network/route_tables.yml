@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Route Tables and Associations for public and private subnets
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prd]
+
+  ProjectName:
+    Type: String
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+
+  InternetGatewayId:
+    Type: String
+
+  NatGatewayId:
+    Type: String
+
+  SubnetPublic1Id:
+    Type: AWS::EC2::Subnet::Id
+  SubnetPublic2Id:
+    Type: AWS::EC2::Subnet::Id
+  SubnetPrivate1Id:
+    Type: AWS::EC2::Subnet::Id
+  SubnetPrivate2Id:
+    Type: AWS::EC2::Subnet::Id
+
+Resources:
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-public-rt"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    # DependsOn: InternetGatewayId
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayId
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-private-rt"
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayId
+
+  PublicRTAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublic1Id
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRTAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublic2Id
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRTAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPrivate1Id
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateRTAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPrivate2Id
+      RouteTableId: !Ref PrivateRouteTable
+
+Outputs:
+  PublicRouteTableId:
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-PublicRouteTableId"
+
+  PrivateRouteTableId:
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-PrivateRouteTableId"

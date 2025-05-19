@@ -1,0 +1,57 @@
+name: Deploy to ECS via CodeDeploy on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  AWS_REGION: ap-northeast-1
+  ENV: dev
+  PROJECT: soelcms
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Extract Git tag
+        id: extract_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Get ECR repository URI from CloudFormation
+        id: ecr_uri
+        run: |
+          REPO_URI=$(aws cloudformation describe-stacks \
+            --stack-name ${ENV}-${PROJECT}-ecr \
+            --query "Stacks[0].Outputs[?OutputKey=='ECRRepositoryUri'].OutputValue" \
+            --output text --region $AWS_REGION)
+          echo "REPO_URI=$REPO_URI" >> $GITHUB_OUTPUT
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin ${{ steps.ecr_uri.outputs.REPO_URI | cut -d'/' -f1 }}
+
+      - name: Build & Push Docker image
+        run: |
+          TAG=${{ steps.extract_tag.outputs.TAG_NAME }}
+          docker buildx create --use
+          docker buildx build --platform linux/amd64 \
+            -t ${{ steps.ecr_uri.outputs.REPO_URI }}:$TAG \
+            --push ./app
+
+      - name: Run Blue/Green Deploy
+        run: |
+          chmod +x ./scripts/deploy-app.sh
+          ./scripts/deploy-app.sh ${{ steps.extract_tag.outputs.TAG_NAME }}

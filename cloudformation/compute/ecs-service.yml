@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ECS Fargate Service with ALB and Blue/Green support via CodeDeploy
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prd]
+
+  ProjectName:
+    Type: String
+
+  ECSClusterName:
+    Type: String
+
+  TaskDefinitionArn:
+    Type: String
+
+  AlbListenerArn:
+    Type: String
+
+  TargetGroup1Arn:
+    Type: String
+
+  TargetGroup2Arn:
+    Type: String
+
+  SubnetPrivate1Id:
+    Type: AWS::EC2::Subnet::Id
+
+  SubnetPrivate2Id:
+    Type: AWS::EC2::Subnet::Id
+
+  EcsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ECSServiceRole
+    Properties:
+      ServiceName: !Sub "${Environment}-${ProjectName}-service"
+      Cluster: !Ref ECSClusterName
+      LaunchType: FARGATE
+      DeploymentController:
+        Type: CODE_DEPLOY
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref SubnetPrivate1Id
+            - !Ref SubnetPrivate2Id
+          SecurityGroups:
+            - !Ref EcsSecurityGroup
+          AssignPublicIp: DISABLED
+      LoadBalancers:
+        - ContainerName: !Sub "${Environment}-${ProjectName}-app"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroup1Arn
+      TaskDefinition: !Ref TaskDefinitionArn
+
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Environment}-${ProjectName}-ecs-service-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole
+
+Outputs:
+  ECSServiceName:
+    Value: !Sub "${Environment}-${ProjectName}-service"
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-ECSServiceName"

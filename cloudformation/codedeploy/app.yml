@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CodeDeploy Application and Deployment Group for ECS Blue/Green Deployments
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prd]
+
+  ProjectName:
+    Type: String
+
+  ServiceName:
+    Type: String
+
+  ECSClusterName:
+    Type: String
+
+  TargetGroup1Arn:
+    Type: String
+
+  TargetGroup2Arn:
+    Type: String
+
+  ListenerArn:
+    Type: String
+
+Resources:
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Sub "${Environment}-${ProjectName}-cd-app"
+      ComputePlatform: ECS
+
+  CodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Environment}-${ProjectName}-codedeploy-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codedeploy.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeDeployECSPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:*
+                  - elasticloadbalancing:*
+                  - cloudwatch:*
+                  - codedeploy:*
+                  - iam:PassRole
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: arn:aws:s3:::codeploy-bundles/*
+
+  CodeDeployDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn: CodeDeployApplication
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      DeploymentGroupName: !Sub "${Environment}-${ProjectName}-dg"
+      ServiceRoleArn: !GetAtt CodeDeployRole.Arn
+      DeploymentConfigName: CodeDeployDefault.ECSAllAtOnce
+      DeploymentStyle:
+        DeploymentType: BLUE_GREEN
+        DeploymentOption: WITH_TRAFFIC_CONTROL
+      BlueGreenDeploymentConfiguration:
+        TerminateBlueInstancesOnDeploymentSuccess:
+          Action: TERMINATE
+          TerminationWaitTimeInMinutes: 5
+        DeploymentReadyOption:
+          ActionOnTimeout: CONTINUE_DEPLOYMENT
+          WaitTimeInMinutes: 0
+      LoadBalancerInfo:
+        TargetGroupPairInfoList:
+          - TargetGroups:
+              - Name: !Select [1, !Split ["/", !Ref TargetGroup1Arn]]
+              - Name: !Select [1, !Split ["/", !Ref TargetGroup2Arn]]
+            ProdTrafficRoute:
+              ListenerArns:
+                - !Ref ListenerArn
+      ECSServices:
+        - ServiceName: !Ref ServiceName
+          ClusterName: !Ref ECSClusterName
+
+Outputs:
+  CodeDeployApplicationName:
+    Value: !Ref CodeDeployApplication
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-CodeDeployApp"
+
+  CodeDeployDeploymentGroupName:
+    Value: !Ref CodeDeployDeploymentGroup
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-CodeDeployGroup"
