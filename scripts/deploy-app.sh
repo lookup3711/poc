@@ -6,8 +6,8 @@ PROJECT="cmssoel"
 REGION="ap-northeast-1"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-# GitHub Actions から渡された TAG を使う
-IMAGE_TAG="${1:-latest}"  # 例: v1.2.3（引数がなければ latest にフォールバック）
+# GitHub Actions などから渡される Docker イメージのタグ（例: v1.2.3）
+IMAGE_TAG="${1:-latest}"
 
 TASK_NAME="${ENV}-${PROJECT}-task"
 CONTAINER_NAME="${ENV}-${PROJECT}-app"
@@ -17,21 +17,20 @@ S3_KEY="${ENV}-${PROJECT}/${IMAGE_TAG}/bundle.zip"
 
 echo "🔍 CloudFormation Output から値を取得中..."
 
-# === CloudFormationから各種値を取得 ===
 ECR_REPO=$(aws cloudformation describe-stacks \
   --stack-name ${ENV}-${PROJECT}-ecr \
   --query "Stacks[0].Outputs[?OutputKey=='ECRRepositoryUri'].OutputValue" \
-  --output text --region $REGION)
+  --output text --region "$REGION")
 
 TASK_EXEC_ROLE=$(aws cloudformation describe-stacks \
   --stack-name ${ENV}-${PROJECT}-ecs \
   --query "Stacks[0].Outputs[?OutputKey=='ECSTaskExecutionRoleArn'].OutputValue" \
-  --output text --region $REGION)
+  --output text --region "$REGION")
 
 SECRET_ARN=$(aws cloudformation describe-stacks \
   --stack-name ${ENV}-${PROJECT}-secrets \
   --query "Stacks[0].Outputs[?OutputKey=='SecretArn'].OutputValue" \
-  --output text --region $REGION)
+  --output text --region "$REGION")
 
 APP_NAME="${ENV}-${PROJECT}-cd-app"
 DG_NAME="${ENV}-${PROJECT}-dg"
@@ -85,12 +84,13 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
+        TaskDefinition: "<TASK_DEFINITION>"
         LoadBalancerInfo:
           ContainerName: ${CONTAINER_NAME}
           ContainerPort: 8080
 EOF
 
-# === 3. zip化して S3 へアップロード ===
+# === 3. zip化して S3 にアップロード ===
 echo "🗜️ Zip にまとめて S3 にアップロード..."
 cd deploy
 rm -f bundle.zip
