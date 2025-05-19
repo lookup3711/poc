@@ -7,7 +7,7 @@ app.get('/', async (req, res) => {
     // ECSタスクからインターネットにアクセスして、自分のパブリックIPを取得
     const ipResponse = await axios.get('https://api.ipify.org?format=json');
     const response = {
-      message: 'Hello from ECS! first version!',
+      message: 'Hello from ECS! hoge version!',
       publicIP: ipResponse.data.ip,
     };
     console.log('External access successful:', response);
