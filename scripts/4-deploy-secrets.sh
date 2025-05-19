@@ -1,24 +1,26 @@
 #!/bin/bash
 set -euo pipefail
 
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
+
 # === 設定 ===
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
+source ./env/${ENV}.env
 STACK_NAME="${ENV}-${PROJECT}-secrets"
 TEMPLATE_PATH="cloudformation/secrets/secrets-outputs.yml"
 
 # === 既存シークレット名を組み立て ===
-SECRET_NAME="${PROJECT}-${ENV}"
-
 echo "🔍 Checking for secret [${SECRET_NAME}]..."
 
 # === シークレットの存在確認 ===
 if ! aws secretsmanager describe-secret \
   --secret-id "$SECRET_NAME" \
   --region "$REGION" > /dev/null 2>&1; then
-  echo "❌ Secret '${SECRET_NAME}' does not exist in region ${REGION}."
-  echo "ℹ️  Please create the secret manually or via CloudFormation before continuing."
+  echo "Secret '${SECRET_NAME}' does not exist in region ${REGION}."
   
   # === CloudFormationテンプレートをデプロイ ===
   echo "🚀 Deploying secrets stack from cloudformation/secrets/secrets.yml..."

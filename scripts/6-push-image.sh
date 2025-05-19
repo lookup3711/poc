@@ -1,10 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
-TAG="latest"
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
+
+# === 設定 ===
+source ./env/${ENV}.env
+TAG="cloudformation"
 
 REPO_URI=$(aws cloudformation describe-stacks \
   --stack-name ${ENV}-${PROJECT}-ecr \

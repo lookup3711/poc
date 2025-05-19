@@ -1,22 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd] [IMAGE_TAG]"
+  exit 1
+fi
+
 # === 初期変数設定 ===
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-IMAGE_TAG="${1:-latest}"
-
-TASK_NAME="${ENV}-${PROJECT}-task"
-CONTAINER_NAME="${ENV}-${PROJECT}-app"
-LOG_GROUP="/ecs/${ENV}-${PROJECT}"
-S3_BUCKET="codeploy-bundles"
+source ./env/${ENV}.env
+IMAGE_TAG="${2:-cloudformation}"
 S3_KEY="${ENV}-${PROJECT}/${IMAGE_TAG}/bundle.zip"
-DEPLOY_DIR="deploy"
-
-APP_NAME="${ENV}-${PROJECT}-cd-app"
-DG_NAME="${ENV}-${PROJECT}-dg"
 
 mkdir -p "$DEPLOY_DIR"
 

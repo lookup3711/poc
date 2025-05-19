@@ -7,10 +7,15 @@ if [[ ! -f "scripts/8-deploy-codedeploy.sh" ]]; then
   exit 1
 fi
 
-# 📌 設定
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
+
+# === 設定 ===
+source ./env/${ENV}.env
 TEMPLATE_PATH="cloudformation/codedeploy/app.yml"
 STACK_NAME="${ENV}-${PROJECT}-codedeploy"
 

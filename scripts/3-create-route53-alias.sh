@@ -2,17 +2,14 @@
 set -euo pipefail
 
 # === 引数処理 ===
-ENV="${1:-dev}"  # 引数がなければ "dev" を使用
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
 if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
   echo "❌ 使用方法: $0 [dev|prd]"
   exit 1
 fi
 
 # 設定
-PROJECT="cmssoel"
-DOMAIN="sarukani.site"
-RECORD_NAME="test-${ENV}.${DOMAIN}"
-ZONE_ID="Z04417933MX83QDSJO8Z7"  # Route 53 のホストゾーンIDに置き換え
+source ./env/${ENV}.env
 
 # 出力取得
 ALB_DNS_NAME=$(aws cloudformation describe-stacks \

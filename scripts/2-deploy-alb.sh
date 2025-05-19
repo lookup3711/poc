@@ -7,10 +7,15 @@ if [[ ! -f "scripts/2-deploy-alb.sh" ]]; then
   exit 1
 fi
 
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
+
 # 環境設定
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
+source ./env/${ENV}.env
 TEMPLATE_DIR="cloudformation/network"
 
 # 出力取得関数
@@ -30,13 +35,6 @@ get_acm_cert_arn() {
     --query "CertificateSummaryList[?DomainName=='${domain}'].CertificateArn" \
     --output text
 }
-
-# ドメイン名を環境によって切り替え
-if [[ "$ENV" == "prd" ]]; then
-  DOMAIN_NAME="test-prd.sarukani.site"
-else
-  DOMAIN_NAME="test-dev.sarukani.site"
-fi
 
 # ドメイン名に対応するACM証明書ARNを取得
 ACM_CERT_ARN=$(get_acm_cert_arn "$DOMAIN_NAME")

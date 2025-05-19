@@ -7,10 +7,15 @@ if [[ ! -f "scripts/1-deploy-network.sh" ]]; then
   exit 1
 fi
 
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
+
 # 📌 環境変数
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
+source ./env/${ENV}.env
 TEMPLATE_DIR="cloudformation/network"
 
 # ✅ CloudFormation の Output を取得する関数

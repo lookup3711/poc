@@ -1,15 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
-# ✅ 環境変数の設定
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
 
-ECR_REPO="343000763695.dkr.ecr.ap-northeast-1.amazonaws.com/${ENV}-${PROJECT}"
-IMAGE_TAG="latest"
-CONTAINER_PORT=8080
-LOG_GROUP="/ecs/${ENV}-${PROJECT}"
+# === 設定 ===
+source ./env/${ENV}.env
+IMAGE_TAG="cloudformation"
+
+# ✅ ECR の ARN 取得
+ECR_REPO=$(aws cloudformation describe-stacks \
+  --stack-name "${ENV}-${PROJECT}-ecr" \
+  --query "Stacks[0].Outputs[?OutputKey=='ECRRepositoryUri'].OutputValue" \
+  --output text --region "$REGION")
 
 # ✅ SecretsManager の ARN 取得
 echo "🔍 シークレットの ARN を取得中..."

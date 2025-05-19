@@ -1,9 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-ENV="dev"
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
+# === 引数処理 ===
+ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
+if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
+  echo "❌ 使用方法: $0 [dev|prd]"
+  exit 1
+fi
+
+# === 設定 ===
+source ./env/${ENV}.env
 
 echo "🚀 ECR リポジトリを作成中..."
 
