@@ -33,11 +33,6 @@ SECRET_ARN=$(aws cloudformation describe-stacks \
   --query "Stacks[0].Outputs[?OutputKey=='SecretArn'].OutputValue" \
   --output text --region $REGION)
 
-TASK_DEF_ARN=$(aws cloudformation describe-stacks \
-  --stack-name ${ENV}-${PROJECT}-ecs \
-  --query "Stacks[0].Outputs[?OutputKey=='TaskDefinitionArn'].OutputValue" \
-  --output text --region $REGION)
-
 APP_NAME="${ENV}-${PROJECT}-cd-app"
 DG_NAME="${ENV}-${PROJECT}-dg"
 
@@ -90,7 +85,6 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: ${TASK_DEF_ARN}
         LoadBalancerInfo:
           ContainerName: ${CONTAINER_NAME}
           ContainerPort: 8080
