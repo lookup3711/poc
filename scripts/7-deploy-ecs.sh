@@ -51,7 +51,7 @@ LISTENER_ARN=$(aws cloudformation describe-stacks \
 # === ECSクラスタ・タスク定義・IAMロール ===
 echo "▶️ 1. ECSクラスタ・タスク定義・IAMロールをデプロイ中..."
 aws cloudformation deploy \
-  --template-file cloudformation/compute/ecs.yaml \
+  --template-file cloudformation/compute/ecs.yml \
   --stack-name ${ENV}-${PROJECT}-ecs \
   --parameter-overrides \
     Environment=$ENV \
@@ -77,7 +77,7 @@ CLUSTER_NAME=$(aws cloudformation describe-stacks \
 # === ECS サービス（CodeDeploy Blue/Green 対応） ===
 echo "▶️ 2. ECSサービスをデプロイ中..."
 aws cloudformation deploy \
-  --template-file cloudformation/compute/ecs-service.yaml \
+  --template-file cloudformation/compute/ecs-service.yml \
   --stack-name ${ENV}-${PROJECT}-ecs-service \
   --parameter-overrides \
     Environment=$ENV \

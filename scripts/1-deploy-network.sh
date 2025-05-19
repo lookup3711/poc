@@ -24,7 +24,7 @@ stack_output() {
 
 echo "▶️ 1. VPC スタック作成"
 aws cloudformation deploy \
-  --template-file ${TEMPLATE_DIR}/vpc.yaml \
+  --template-file ${TEMPLATE_DIR}/vpc.yml \
   --stack-name ${ENV}-${PROJECT}-vpc \
   --parameter-overrides Environment=$ENV ProjectName=$PROJECT \
   --region $REGION
@@ -44,7 +44,7 @@ PRV2_ID=$(stack_output "${ENV}-${PROJECT}-vpc" SubnetPrivate2)
 
 echo "▶️ 2. IGW/NAT スタック作成"
 aws cloudformation deploy \
-  --template-file ${TEMPLATE_DIR}/igw_nat.yaml \
+  --template-file ${TEMPLATE_DIR}/igw_nat.yml \
   --stack-name ${ENV}-${PROJECT}-igw-nat \
   --parameter-overrides \
     Environment=$ENV \
@@ -64,7 +64,7 @@ NAT_ID=$(stack_output "${ENV}-${PROJECT}-igw-nat" NatGatewayId)
 
 echo "▶️ 3. Route Table スタック作成"
 aws cloudformation deploy \
-  --template-file ${TEMPLATE_DIR}/route_tables.yaml \
+  --template-file ${TEMPLATE_DIR}/route_tables.yml \
   --stack-name ${ENV}-${PROJECT}-routes \
   --parameter-overrides \
     Environment=$ENV \
@@ -80,7 +80,7 @@ aws cloudformation deploy \
 
 echo "▶️ 4. Security Group スタック作成"
 aws cloudformation deploy \
-  --template-file ${TEMPLATE_DIR}/sg.yaml \
+  --template-file ${TEMPLATE_DIR}/sg.yml \
   --stack-name ${ENV}-${PROJECT}-sg \
   --parameter-overrides \
     Environment=$ENV \
@@ -98,7 +98,7 @@ PRIVATE_RT_ID=$(stack_output "${ENV}-${PROJECT}-routes" PrivateRouteTableId)
 VPCE_SG_ID=$(stack_output "${ENV}-${PROJECT}-sg" VpcEndpointSecurityGroup)
 
 aws cloudformation deploy \
-  --template-file ${TEMPLATE_DIR}/vpc_endpoint.yaml \
+  --template-file ${TEMPLATE_DIR}/vpc_endpoint.yml \
   --stack-name ${ENV}-${PROJECT}-vpce \
   --parameter-overrides \
     Environment=$ENV \

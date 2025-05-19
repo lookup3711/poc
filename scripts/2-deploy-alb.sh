@@ -59,7 +59,7 @@ CONTAINER_PORT=8080
 # デプロイ
 echo "▶️ ALBスタックを作成中..."
 aws cloudformation deploy \
-  --template-file ${TEMPLATE_DIR}/alb.yaml \
+  --template-file ${TEMPLATE_DIR}/alb.yml \
   --stack-name ${ENV}-${PROJECT}-alb \
   --parameter-overrides \
     Environment=$ENV \

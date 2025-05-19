@@ -6,7 +6,7 @@ ENV="dev"
 PROJECT="cmssoel"
 REGION="ap-northeast-1"
 STACK_NAME="${ENV}-${PROJECT}-secrets"
-TEMPLATE_PATH="cloudformation/secrets/secrets-outputs.yaml"
+TEMPLATE_PATH="cloudformation/secrets/secrets-outputs.yml"
 
 # === 既存シークレット名を組み立て ===
 SECRET_NAME="${PROJECT}-${ENV}"
@@ -21,9 +21,9 @@ if ! aws secretsmanager describe-secret \
   echo "ℹ️  Please create the secret manually or via CloudFormation before continuing."
   
   # === CloudFormationテンプレートをデプロイ ===
-  echo "🚀 Deploying secrets stack from cloudformation/secrets/secrets.yaml..."
+  echo "🚀 Deploying secrets stack from cloudformation/secrets/secrets.yml..."
   aws cloudformation deploy \
-    --template-file "cloudformation/secrets/secrets.yaml" \
+    --template-file "cloudformation/secrets/secrets.yml" \
     --stack-name "${STACK_NAME}" \
     --region "$REGION" \
     --capabilities CAPABILITY_NAMED_IAM \

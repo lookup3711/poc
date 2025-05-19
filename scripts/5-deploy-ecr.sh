@@ -8,7 +8,7 @@ REGION="ap-northeast-1"
 echo "🚀 ECR リポジトリを作成中..."
 
 aws cloudformation deploy \
-  --template-file cloudformation/ecr/ecr.yaml \
+  --template-file cloudformation/ecr/ecr.yml \
   --stack-name ${ENV}-${PROJECT}-ecr \
   --parameter-overrides \
     Environment=$ENV \

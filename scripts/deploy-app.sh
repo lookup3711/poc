@@ -82,9 +82,9 @@ cat > deploy/taskdef.json <<EOF
 }
 EOF
 
-# === 2. appspec.yaml を生成 ===
-echo "📄 appspec.yaml を生成中..."
-cat > deploy/appspec.yaml <<EOF
+# === 2. appspec.yml を生成 ===
+echo "📄 appspec.yml を生成中..."
+cat > deploy/appspec.yml <<EOF
 version: "1"
 Resources:
   - TargetService:
@@ -100,7 +100,7 @@ EOF
 echo "🗜️ Zip にまとめて S3 にアップロード..."
 cd deploy
 rm -f bundle.zip
-zip bundle.zip appspec.yaml taskdef.json > /dev/null
+zip bundle.zip appspec.yml taskdef.json > /dev/null
 aws s3 cp bundle.zip s3://${S3_BUCKET}/${S3_KEY} --region "$REGION"
 cd ..
 

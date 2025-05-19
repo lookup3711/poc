@@ -11,7 +11,7 @@ fi
 ENV="dev"
 PROJECT="cmssoel"
 REGION="ap-northeast-1"
-TEMPLATE_PATH="cloudformation/codedeploy/app.yaml"
+TEMPLATE_PATH="cloudformation/codedeploy/app.yml"
 STACK_NAME="${ENV}-${PROJECT}-codedeploy"
 
 # ✅ CloudFormation の Output を取得する関数
