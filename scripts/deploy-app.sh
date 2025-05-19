@@ -42,6 +42,7 @@ APP_NAME="${ENV}-${PROJECT}-cd-app"
 DG_NAME="${ENV}-${PROJECT}-dg"
 
 # === 1. taskdef.json を生成 ===
+mkdir -p deploy
 echo "📄 taskdef.json を生成中..."
 cat > deploy/taskdef.json <<EOF
 {
