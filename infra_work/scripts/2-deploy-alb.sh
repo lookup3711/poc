@@ -37,11 +37,11 @@ get_acm_cert_arn() {
 }
 
 # ドメイン名に対応するACM証明書ARNを取得
-ACM_CERT_ARN=$(get_acm_cert_arn "$DOMAIN_NAME")
+ACM_CERT_ARN=$(get_acm_cert_arn "$FQDN")
 
 # バリデーション
 if [[ -z "$ACM_CERT_ARN" ]]; then
-  echo "❌ ACM 証明書がドメイン [$DOMAIN_NAME] に対して見つかりません"
+  echo "❌ ACM 証明書がドメイン [$FQDN] に対して見つかりません"
   exit 1
 fi
 

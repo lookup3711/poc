@@ -9,18 +9,15 @@ if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
 fi
 
 # === 設定 ===
-PROJECT="cmssoel"
-REGION="ap-northeast-1"
-HOSTED_ZONE_NAME="sarukani.site"
+source ./env/${ENV}.env
 PURPOSE="test"
 
 # === 1. ドメイン名を組み立てる ===
-DOMAIN_NAME="${PURPOSE}-${ENV}.${HOSTED_ZONE_NAME}"
-echo "📌 リクエスト対象のドメイン: ${DOMAIN_NAME}"
+echo "📌 リクエスト対象のドメイン: ${FQDN}"
 
 # === 2. 証明書をリクエスト ===
 CERT_ARN=$(aws acm request-certificate \
-  --domain-name "$DOMAIN_NAME" \
+  --domain-name "$FQDN" \
   --validation-method DNS \
   --idempotency-token "${PURPOSE}${ENV}" \
   --region "$REGION" \
@@ -43,7 +40,7 @@ echo "✅ CNAMEレコード: ${NAME} ${TYPE} ${VALUE}"
 
 # === 4. Hosted Zone ID を取得 ===
 HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name \
-  --dns-name "$HOSTED_ZONE_NAME" \
+  --dns-name "$ZONE_NAME" \
   --query "HostedZones[0].Id" \
   --output text | sed 's|/hostedzone/||')
 

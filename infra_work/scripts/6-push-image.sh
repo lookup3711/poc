@@ -24,6 +24,6 @@ aws ecr get-login-password --region $REGION \
 echo "🚀 Docker イメージをビルド中..."
 docker buildx build --platform linux/amd64 \
   -t ${REPO_URI}:${TAG} \
-  --push ./app
+  --push ../app
 
 echo "✅ イメージのプッシュ完了"
