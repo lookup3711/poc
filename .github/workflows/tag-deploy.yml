@@ -72,5 +72,6 @@ jobs:
 
       - name: Run Blue/Green Deploy
         run: |
+          cd infra_work
           chmod +x ./scripts/deploy-app.sh
           ./scripts/deploy-app.sh "${{ steps.parse_tag.outputs.ENV }}" "${{ steps.parse_tag.outputs.TAG }}"
