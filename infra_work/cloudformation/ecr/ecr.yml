@@ -9,11 +9,14 @@ Parameters:
   ProjectName:
     Type: String
 
+  ECRName:
+    Type: String
+
 Resources:
   ECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "${Environment}-${ProjectName}"
+      RepositoryName: !Ref ECRName
       ImageScanningConfiguration:
         ScanOnPush: false
       ImageTagMutability: MUTABLE

@@ -63,6 +63,8 @@ echo "▶️ CloudFormation stacks を削除中..."
 for stack in "${STACKS[@]}"; do
   echo "🧹 Deleting stack: $stack"
   aws cloudformation delete-stack --stack-name "$stack" --region "$REGION"
+  echo "⏱️ 停止待機中..."
+  sleep 3
 done
 
 echo "⏳ スタックの削除を待機（任意で監視を推奨）"

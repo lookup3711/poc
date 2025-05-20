@@ -19,6 +19,7 @@ aws cloudformation deploy \
   --parameter-overrides \
     Environment=$ENV \
     ProjectName=$PROJECT \
+    ECRName="$ECR_REPO_NAME" \
   --region $REGION
 
 echo "✅ ECR リポジトリ作成完了"
