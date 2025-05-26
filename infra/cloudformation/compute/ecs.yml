@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ECS Cluster, Task Definition, and IAM Role
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prd]
+
+  ProjectName:
+    Type: String
+
+  ECRRepositoryUri:
+    Type: String
+
+  ECRImageTag:
+    Type: String
+    Default: "latest"
+
+  ContainerPort:
+    Type: Number
+    Default: 8080
+
+  SecretArn:
+    Type: String
+
+  LogGroupName:
+    Type: String
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${Environment}-${ProjectName}-cluster"
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Environment}-${ProjectName}-ecs-task-execution-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: AllowSecretsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                # Resource: !Ref SecretArn
+                # TODO: 必要なものに絞る
+                Resource: "*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-ecs-role"
+
+  AppTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${Environment}-${ProjectName}-ecs-task"
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: "256"
+      # Memory: "1024"
+      Memory: "512"
+      NetworkMode: awsvpc
+      TaskRoleArn: !Ref ECSTaskExecutionRole
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub "${Environment}-${ProjectName}-app"
+          Image: !Sub "${ECRRepositoryUri}:${ECRImageTag}"
+          Cpu: 256
+          # Memory: 1024
+          Memory: 512
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
+          Environment: 
+            - Name: ENV
+              Value: !Ref Environment
+            - Name: APP_VERSION
+              Value: !Ref ECRImageTag
+          Secrets:
+            - Name: APP_SECRET
+              ValueFrom: !Ref SecretArn
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroupName
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref LogGroupName
+      RetentionInDays: 7
+
+Outputs:
+  ECSClusterName:
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-ECSCluster"
+
+  ECSTaskExecutionRoleArn:
+    Value: !GetAtt ECSTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-ECSTaskExecutionRoleArn"
+
+  TaskDefinitionArn:
+    Value: !Ref AppTaskDefinition
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-TaskDefinitionArn"

@@ -157,7 +157,7 @@ aws ecs register-task-definition \
 
 # create-deployment S3経由で実行（filebだとうまくいかなかった
 
-yamashitaaogunoMacBook-Pro:poc lookup3711$ aws s3 mb s3://codeploy-bundles --region ap-northeast-1
+yamashitaaogunoMacBook-Pro:poc lookup3711$ aws s3 mb s3://deploy-bucket --region ap-northeast-1
 make_bucket: codeploy-bundles
 yamashitaaogunoMacBook-Pro:poc lookup3711$ aws s3 cp deploy/bundle.zip s3://codeploy-bundles/dev-cmssoel/bundle.zip
 upload: deploy/bundle.zip to s3://codeploy-bundles/dev-cmssoel/bundle.zip

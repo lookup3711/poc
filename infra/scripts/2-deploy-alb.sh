@@ -51,9 +51,6 @@ PUB1_ID=$(stack_output "${ENV}-${PROJECT}-vpc" SubnetPublic1)
 PUB2_ID=$(stack_output "${ENV}-${PROJECT}-vpc" SubnetPublic2)
 ALB_SG=$(stack_output "${ENV}-${PROJECT}-sg" AlbSecurityGroup)
 
-# ポートと証明書
-CONTAINER_PORT=8080
-
 # デプロイ
 echo "▶️ ALBスタックを作成中..."
 aws cloudformation deploy \

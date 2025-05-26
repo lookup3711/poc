@@ -49,6 +49,16 @@ cat > "$WORK_DIR/taskdef.json" <<EOF
           "protocol": "tcp"
         }
       ],
+      "environment": [
+          {
+              "name": "ENV",
+              "value": "${ENV}"
+          },
+          {
+              "name": "APP_VERSION",
+              "value": "${IMAGE_TAG}"
+          }
+      ],
       "secrets": [
         {
           "name": "APP_SECRET",
@@ -60,7 +70,7 @@ cat > "$WORK_DIR/taskdef.json" <<EOF
         "options": {
           "awslogs-group": "${LOG_GROUP}",
           "awslogs-region": "${REGION}",
-          "awslogs-stream-prefix": "app"
+          "awslogs-stream-prefix": "ecs"
         }
       },
       "essential": true
@@ -101,7 +111,7 @@ echo "🗜️ appspec.yml を zip にまとめて S3 にアップロード..."
 cd "$WORK_DIR"
 rm -f bundle.zip
 zip bundle.zip appspec.yml > /dev/null
-aws s3 cp bundle.zip s3://${S3_BUCKET}/${S3_KEY} --region "$REGION"
+aws s3 cp bundle.zip s3://${DEPLOY_BUCKET}/${S3_KEY} --region "$REGION"
 cd ..
 
 # === 5. CodeDeploy デプロイ作成 ===
@@ -110,7 +120,7 @@ DEPLOY_ID=$(aws deploy create-deployment \
   --application-name "${APP_NAME}" \
   --deployment-group-name "${DG_NAME}" \
   --deployment-config-name CodeDeployDefault.ECSAllAtOnce \
-  --s3-location bucket=${S3_BUCKET},key=${S3_KEY},bundleType=zip \
+  --s3-location bucket=${DEPLOY_BUCKET},key=${S3_KEY},bundleType=zip \
   --region "$REGION" \
   --query "deploymentId" \
   --output text)

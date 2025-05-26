@@ -1,0 +1,15 @@
+{
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "_eb077d840256288ca3e427866184baa2.dev.cmssoel.click.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          { "Value": "_027e4ea4f81d08c507fda68f36a50d3a.xlfgrmvvlj.acm-validations.aws." }
+        ]
+      }
+    }
+  ]
+}

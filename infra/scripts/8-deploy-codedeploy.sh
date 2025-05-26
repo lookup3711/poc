@@ -49,6 +49,7 @@ aws cloudformation deploy \
     TargetGroup1Arn=$TG1_ARN \
     TargetGroup2Arn=$TG2_ARN \
     ListenerArn=$LISTENER_ARN \
+    DeployBucketName=${DEPLOY_BUCKET} \
   --capabilities CAPABILITY_NAMED_IAM
 
 echo "✅ CodeDeploy スタックの作成が完了しました"

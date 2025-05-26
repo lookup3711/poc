@@ -23,6 +23,9 @@ Parameters:
 
   ListenerArn:
     Type: String
+  
+  DeployBucketName:
+    Type: String
 
 Resources:
   CodeDeployApplication:
@@ -58,7 +61,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: arn:aws:s3:::codeploy-bundles/*
+                Resource: !Sub "arn:aws:s3:::${DeployBucketName}/*"
 
   CodeDeployDeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup

@@ -53,7 +53,9 @@ Resources:
               - Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: !Ref SecretArn
+                # Resource: !Ref SecretArn
+                # TODO: 必要なものに絞る
+                Resource: "*"
       Tags:
         - Key: Name
           Value: !Sub "${Environment}-${ProjectName}-ecs-role"
@@ -61,27 +63,46 @@ Resources:
   AppTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${Environment}-${ProjectName}-task"
+      Family: !Sub "${Environment}-${ProjectName}-ecs-task"
       RequiresCompatibilities:
         - FARGATE
       Cpu: "256"
-      Memory: "512"
+      Memory: "1024"
       NetworkMode: awsvpc
+      TaskRoleArn: !Ref ECSTaskExecutionRole
       ExecutionRoleArn: !Ref ECSTaskExecutionRole
       ContainerDefinitions:
         - Name: !Sub "${Environment}-${ProjectName}-app"
           Image: !Sub "${ECRRepositoryUri}:${ECRImageTag}"
+          Cpu: 256
+          Memory: 1024
+          Essential: true
           PortMappings:
-            - ContainerPort: !Ref ContainerPort
+            - ContainerPort: 8080
+              HostPort: 8080
+              Protocol: tcp
+          Environment: []
           Secrets:
-            - Name: APP_SECRET
-              ValueFrom: !Ref SecretArn
+            - Name: GOOGLE_CLIENT_ID
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:soel-cms-dev-soel-cms-ny83VS:GOOGLE_CLIENT_ID::"
+            - Name: GOOGLE_CLIENT_SECRET
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:soel-cms-dev-soel-cms-ny83VS:GOOGLE_CLIENT_SECRET::"
+            - Name: POSTGRES_HOST
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:soel-cms-dev-soel-cms-ny83VS:POSTGRES_HOST::"
+            - Name: POSTGRES_PORT
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:soel-cms-dev-soel-cms-ny83VS:POSTGRES_PORT::"
+            - Name: POSTGRES_USER
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:rds!db-1ccd67f6-96d9-4f6b-a402-744e4d1e5cea-xbmbJc:username::"
+            - Name: POSTGRES_PASSWORD
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:rds!db-1ccd67f6-96d9-4f6b-a402-744e4d1e5cea-xbmbJc:password::"
+            - Name: POSTGRES_DB
+              ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:211125631266:secret:soel-cms-dev-soel-cms-ny83VS:POSTGRES_DB::"
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref LogGroupName
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: app
+              awslogs-stream-prefix: ecs
 
   AppLogGroup:
     Type: AWS::Logs::LogGroup
