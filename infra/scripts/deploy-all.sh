@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # ✅ 実行ディレクトリチェック
-if [[ ! -f "scripts/#-deploy-all.sh" ]]; then
-  echo "❌ Please run this script from the project root (e.g., ./scripts/#-deploy-all.sh)"
+if [[ ! -f "scripts/deploy-all.sh" ]]; then
+  echo "❌ Please run this script from the project root (e.g., ./scripts/deploy-all.sh)"
   exit 1
 fi
 
@@ -15,14 +15,16 @@ if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
 fi
 
 SCRIPTS=(
-  "1-deploy-network.sh"
-  "2-deploy-alb.sh"
-  "3-create-route53-alias.sh"
-  "4-deploy-secrets.sh"
-  "5-deploy-ecr.sh"
-  "6-push-image.sh"
-  "7-deploy-ecs.sh"
-  "8-deploy-codedeploy.sh"
+  "010-deploy-secrets.sh"
+  "020-deploy-network.sh"
+  "030-deploy-alb.sh"
+  "040-create-route53-alias.sh"
+  "050-deploy-ecr.sh"
+  "060-deploy-rds-bastion.sh"
+  "070-push-dummy-image.sh"
+  "080-deploy-ecs.sh"
+  "090-deploy-codedeploy.sh"
+  "100-deploy-app.sh"
 )
 
 echo "🚀 全スタックを順番にデプロイします"
@@ -36,4 +38,4 @@ for script in "${SCRIPTS[@]}"; do
 done
 
 echo ""
-echo "✅ すべてのデプロイが完了しました"
+echo "✅ すべてのスクリプトが完了しました"

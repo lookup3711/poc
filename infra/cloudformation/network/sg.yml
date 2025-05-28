@@ -95,6 +95,20 @@ Resources:
         - Key: Name
           Value: !Sub "${Environment}-${ProjectName}-vpc-endpoint-sg"
 
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 10.0.0.0/8  # 必要に応じて ECS SG に制限可能
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-rds-sg"
+
 Outputs:
   AlbSecurityGroup:
     Value: !Ref AlbSecurityGroup
@@ -115,3 +129,8 @@ Outputs:
     Value: !Ref VpcEndpointSecurityGroup
     Export:
       Name: !Sub "${Environment}-${ProjectName}-VpcEndpointSG"
+
+  RDSSecurityGroupId:
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-RDSSecurityGroupId"

@@ -10,7 +10,8 @@ fi
 
 # === 設定 ===
 source ./env/${ENV}.env
-IMAGE_TAG="cloudformation"
+# push-image で使用しているもの
+IMAGE_TAG="dummy"
 
 # ✅ ECR の ARN 取得
 ECR_REPO=$(aws cloudformation describe-stacks \
@@ -20,11 +21,16 @@ ECR_REPO=$(aws cloudformation describe-stacks \
 
 # ✅ SecretsManager の ARN 取得
 echo "🔍 シークレットの ARN を取得中..."
-SECRET_ARN=$(aws cloudformation describe-stacks \
-  --stack-name ${ENV}-${PROJECT}-secrets \
-  --query "Stacks[0].Outputs[?OutputKey=='SecretArn'].OutputValue" \
-  --output text \
-  --region "$REGION")
+SECRET_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "$SECRET_NAME" \
+  --region "$REGION" \
+  --query "ARN" \
+  --output text)
+
+RDS_SECRET_ARN=$(aws cloudformation describe-stacks \
+  --stack-name "${ENV}-${PROJECT}-rds-bastion" \
+  --query "Stacks[0].Outputs[?OutputKey=='RDSSecretArn'].OutputValue" \
+  --output text)
 
 # ✅ ネットワーク関連の Output 取得
 echo "🔍 サブネットとセキュリティグループの情報を取得中..."
@@ -67,6 +73,7 @@ aws cloudformation deploy \
     ECRImageTag=$IMAGE_TAG \
     ContainerPort=$CONTAINER_PORT \
     SecretArn=$SECRET_ARN \
+    RdsSecretArn=$RDS_SECRET_ARN \
     LogGroupName=$LOG_GROUP \
   --capabilities CAPABILITY_NAMED_IAM \
   --region "$REGION"

@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: RDS (PostgreSQL) and Bastion Host Stack with Managed Master Password
+
+Parameters:
+  Environment:
+    Type: String
+  ProjectName:
+    Type: String
+  SubnetPrivate1:
+    Type: AWS::EC2::Subnet::Id
+  SubnetPrivate2:
+    Type: AWS::EC2::Subnet::Id
+  RDSSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+  RDSInstanceClass:
+    Type: String
+  BastionInstanceClass:
+    Type: String
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64'
+
+Resources:
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref SubnetPrivate1
+        - !Ref SubnetPrivate2
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-rds-subnet-group"
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "${Environment}-${ProjectName}-db"
+      AllocatedStorage: 20
+      DBInstanceClass: !Ref RDSInstanceClass
+      Engine: postgres
+      EngineVersion: 16.3
+      ManageMasterUserPassword: true
+      MasterUsername: postgres
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroupId
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      MultiAZ: false
+      PubliclyAccessible: false
+      StorageType: gp2
+      DeletionProtection: false
+
+  BastionInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref BastionSSMRole
+
+  BastionSSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  BastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BastionInstanceClass
+      ImageId: !Ref LatestAmiId
+      SubnetId: !Ref SubnetPrivate1
+      SecurityGroupIds:
+        - !Ref RDSSecurityGroupId
+      IamInstanceProfile: !Ref BastionInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf install -y postgresql16
+      Tags:
+        - Key: Name
+          Value: !Sub "${Environment}-${ProjectName}-bastion"
+
+Outputs:
+  RDSEndpoint:
+    Description: The RDS instance endpoint
+    Value: !GetAtt RDSInstance.Endpoint.Address
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-rds-endpoint"
+
+  RDSSecretArn:
+    Description: ARN of the managed master user secret
+    Value: !GetAtt RDSInstance.MasterUserSecret.SecretArn
+    Export:
+      Name: !Sub "${Environment}-${ProjectName}-rds-secret-arn"

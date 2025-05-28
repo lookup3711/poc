@@ -9,8 +9,6 @@ app.get('/', async (req, res) => {
     const response = {
       message: 'Hello from ECS!',
       publicIP: ipResponse.data.ip,
-      env: process.env.ENV || "unknown",
-      version: process.env.APP_VERSION || "unknown",
     };
     console.log('External access successful:', response);
     res.json(response);

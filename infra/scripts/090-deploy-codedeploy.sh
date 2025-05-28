@@ -1,12 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# ✅ 実行ディレクトリチェック（プロジェクトルート想定）
-if [[ ! -f "scripts/8-deploy-codedeploy.sh" ]]; then
-  echo "❌ このスクリプトはプロジェクトルートから実行してください。"
-  exit 1
-fi
-
 # === 引数処理 ===
 ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
 if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then

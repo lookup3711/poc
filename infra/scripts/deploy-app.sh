@@ -10,7 +10,7 @@ fi
 
 # === 初期変数設定 ===
 source ./env/${ENV}.env
-IMAGE_TAG="${2:-cloudformation}"
+IMAGE_TAG="${2:-init}"
 S3_KEY="${ENV}-${PROJECT}/${IMAGE_TAG}/bundle.zip"
 
 mkdir -p "$WORK_DIR"
@@ -27,10 +27,16 @@ TASK_EXEC_ROLE=$(aws cloudformation describe-stacks \
   --query "Stacks[0].Outputs[?OutputKey=='ECSTaskExecutionRoleArn'].OutputValue" \
   --output text --region "$REGION")
 
-SECRET_ARN=$(aws cloudformation describe-stacks \
-  --stack-name "${ENV}-${PROJECT}-secrets" \
-  --query "Stacks[0].Outputs[?OutputKey=='SecretArn'].OutputValue" \
-  --output text --region "$REGION")
+SECRET_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "$SECRET_NAME" \
+  --region "$REGION" \
+  --query "ARN" \
+  --output text)
+
+RDS_SECRET_ARN=$(aws cloudformation describe-stacks \
+  --stack-name "${ENV}-${PROJECT}-rds-bastion" \
+  --query "Stacks[0].Outputs[?OutputKey=='RDSSecretArn'].OutputValue" \
+  --output text)
 
 # === 1. taskdef.json を生成 ===
 echo "📄 taskdef.json を生成中..."
@@ -45,7 +51,7 @@ cat > "$WORK_DIR/taskdef.json" <<EOF
       "image": "${ECR_REPO}:${IMAGE_TAG}",
       "portMappings": [
         {
-          "containerPort": 8080,
+          "containerPort": ${CONTAINER_PORT},
           "protocol": "tcp"
         }
       ],
@@ -60,10 +66,26 @@ cat > "$WORK_DIR/taskdef.json" <<EOF
           }
       ],
       "secrets": [
-        {
-          "name": "APP_SECRET",
-          "valueFrom": "${SECRET_ARN}"
-        }
+          {
+              "name": "POSTGRES_HOST",
+              "valueFrom": "${SECRET_ARN}:POSTGRES_HOST::"
+          },
+          {
+              "name": "POSTGRES_PORT",
+              "valueFrom": "${SECRET_ARN}:POSTGRES_PORT::"
+          },
+          {
+              "name": "POSTGRES_USER",
+              "valueFrom": "${RDS_SECRET_ARN}:username::"
+          },
+          {
+              "name": "POSTGRES_PASSWORD",
+              "valueFrom": "${RDS_SECRET_ARN}:password::"
+          },
+          {
+              "name": "POSTGRES_DB",
+              "valueFrom": "${SECRET_ARN}:POSTGRES_DB::"
+          }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -77,8 +99,8 @@ cat > "$WORK_DIR/taskdef.json" <<EOF
     }
   ],
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "256",
-  "memory": "512"
+  "cpu": "${CONTAINER_CPU}",
+  "memory": "${CONTAINER_MEMORY}"
 }
 EOF
 

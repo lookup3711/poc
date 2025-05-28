@@ -64,14 +64,12 @@ jobs:
 
       - name: Build & Push Docker image
         run: |
-          TAG=${{ steps.parse_tag.outputs.TAG }}
-          docker buildx create --use
-          docker buildx build --platform linux/amd64 \
-            -t ${{ steps.ecr_uri.outputs.REPO_URI }}:$TAG \
-            --push ./app
+          cd infra
+          chmod +x ./scripts/push-image.sh
+          ./script/push-image.sh "${{ steps.parse_tag.outputs.ENV }}" "${{ steps.parse_tag.outputs.TAG }}"
 
       - name: Run Blue/Green Deploy
         run: |
-          cd infra_work
+          cd infra
           chmod +x ./scripts/deploy-app.sh
           ./scripts/deploy-app.sh "${{ steps.parse_tag.outputs.ENV }}" "${{ steps.parse_tag.outputs.TAG }}"

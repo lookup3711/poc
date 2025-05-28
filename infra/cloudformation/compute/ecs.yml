@@ -23,6 +23,9 @@ Parameters:
   SecretArn:
     Type: String
 
+  RdsSecretArn:
+    Type: String
+
   LogGroupName:
     Type: String
 
@@ -53,13 +56,14 @@ Resources:
               - Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                # Resource: !Ref SecretArn
-                # TODO: 必要なものに絞る
-                Resource: "*"
+                Resource:
+                  - !Ref SecretArn
+                  - !Ref RdsSecretArn
       Tags:
         - Key: Name
           Value: !Sub "${Environment}-${ProjectName}-ecs-role"
 
+  # 初期のダミー用
   AppTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -67,7 +71,6 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       Cpu: "256"
-      # Memory: "1024"
       Memory: "512"
       NetworkMode: awsvpc
       TaskRoleArn: !Ref ECSTaskExecutionRole
@@ -76,7 +79,6 @@ Resources:
         - Name: !Sub "${Environment}-${ProjectName}-app"
           Image: !Sub "${ECRRepositoryUri}:${ECRImageTag}"
           Cpu: 256
-          # Memory: 1024
           Memory: 512
           Essential: true
           PortMappings:
@@ -87,9 +89,6 @@ Resources:
               Value: !Ref Environment
             - Name: APP_VERSION
               Value: !Ref ECRImageTag
-          Secrets:
-            - Name: APP_SECRET
-              ValueFrom: !Ref SecretArn
           LogConfiguration:
             LogDriver: awslogs
             Options:

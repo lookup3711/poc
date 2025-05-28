@@ -10,7 +10,8 @@ fi
 
 # === 設定 ===
 source ./env/${ENV}.env
-IMAGE_TAG="${2:-cloudformation}"
+# 直後にある ecs のタスク定義と揃える
+IMAGE_TAG="dummy"
 
 REPO_URI=$(aws cloudformation describe-stacks \
   --stack-name ${ENV}-${PROJECT}-ecr \

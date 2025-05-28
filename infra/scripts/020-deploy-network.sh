@@ -1,12 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# ✅ 実行ディレクトリチェック
-if [[ ! -f "scripts/1-deploy-network.sh" ]]; then
-  echo "❌ Please run this script from the project root (e.g., ./scripts/1-deploy-network.sh)"
-  exit 1
-fi
-
 # === 引数処理 ===
 ENV="${1:-xxx}"  # 引数がなければ "xxx" をダミーとして使用
 if [[ "$ENV" != "dev" && "$ENV" != "prd" ]]; then
